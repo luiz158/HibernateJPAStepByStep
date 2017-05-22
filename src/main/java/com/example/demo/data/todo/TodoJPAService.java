@@ -1,6 +1,5 @@
-package com.example.demo;
+package com.example.demo.data.todo;
 
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
@@ -11,13 +10,16 @@ import javax.transaction.Transactional;
 
 import org.springframework.stereotype.Repository;
 
+import com.example.demo.entity.Todo;
+
 @Repository
 @Transactional
-public class TodoJPAService {
+public class TodoJPAService implements TodoDataService {
 
 	@PersistenceContext
 	private EntityManager entityManager;
 
+	@Override
 	public List<Todo> retrieveTodos(String user) {
 		Query query = entityManager.createNamedQuery(
 				"find all todos for user", Todo.class);
@@ -26,25 +28,28 @@ public class TodoJPAService {
 
 	}
 
-	public int addTodo(int id, String user, String desc,
-			Date targetDate, boolean isDone)
-					throws SQLException {
+	@Override
+	public int addTodo(String user, String desc,
+			Date targetDate, boolean isDone) {
 		Todo todo = entityManager.merge(
 				new Todo(user, desc, targetDate, isDone));
 		return todo.getId();
 	}
 
-	public Todo retrieveTodo(int id) throws SQLException {
+	@Override
+	public Todo retrieveTodo(int id) {
 		return entityManager.find(Todo.class, id);
 	}
 
+	@Override
 	public void updateTodo(Todo todo) {
 		entityManager.merge(todo);
 	}
 
+	@Override
 	public void deleteTodo(int id) {
-		// TODO
+		Todo todo = retrieveTodo(id);
+		entityManager.remove(todo);
 	}
-
 }
 

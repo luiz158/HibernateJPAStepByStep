@@ -1,22 +1,22 @@
 package com.example.demo;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import javax.sql.DataSource;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.example.demo.data.student.GenericAllPurposeRepository;
+import com.example.demo.data.student.StudentRepository;
+import com.example.demo.data.todo.TodoDataService;
+import com.example.demo.entity.Passport;
+import com.example.demo.entity.Project;
+import com.example.demo.entity.Student;
+import com.example.demo.entity.Task;
+
+//In almost every relationship, independent of source and target sides, one of the two sides will have the join column in its table. That side is called the owning side or the owner of the relationship. The side that does not have the join column is called the non-owning or inverse side.
+//Although we have described the owning side as being determined by the data schema, the object model must indicate the owning side through the use of the relationship mapping annotations. The absence of the mappedBy element in the mapping annotation implies ownership of the relationship, while the presence of the mappedBy element means the entity is on the inverse side of the relationship. The mappedBy element is described in subsequent sections.
 
 @SpringBootApplication
 public class DemoApplication implements CommandLineRunner {
@@ -25,13 +25,13 @@ public class DemoApplication implements CommandLineRunner {
 			.getLogger(DemoApplication.class);
 
 	@Autowired
-	JdbcTemplate jdbcTemplate;
+	TodoDataService todoJPAService;
 
 	@Autowired
-	DataSource datasource;
+	StudentRepository studentRepository;
 
 	@Autowired
-	TodoJPAService todoJPAService;
+	GenericAllPurposeRepository genericRepository;
 
 	public static void main(String[] args) {
 		SpringApplication.run(DemoApplication.class, args);
@@ -40,98 +40,86 @@ public class DemoApplication implements CommandLineRunner {
 	@Override
 	public void run(String... strings) throws Exception {
 
-		log.info("Creating tables");
+		runAllStudentExamples();
 
-		jdbcTemplate.execute("DROP TABLE todo IF EXISTS");
-
-		jdbcTemplate.execute("CREATE TABLE todo("
-				+ "id SERIAL, user VARCHAR(255), desc VARCHAR(255), target_date TIMESTAMP, is_done BOOLEAN)");
-
-		jdbcTemplate
-				.execute("DROP TABLE customers IF EXISTS");
-
-		jdbcTemplate.execute("CREATE TABLE customers("
-				+ "id SERIAL, first_name VARCHAR(255), last_name VARCHAR(255))");
-
-		// Split up the array of whole names into an array of first/last names
-		List<Object[]> splitUpNames = Arrays
-				.asList("John Woo", "Jeff Dean",
-						"Josh Bloch", "Josh Long")
-				.stream().map(name -> name.split(" "))
-				.collect(Collectors.toList());
-
-		// Use a Java 8 stream to print out each tuple of the list
-		splitUpNames.forEach(name -> log.info(String.format(
-				"Inserting customer record for %s %s",
-				name[0], name[1])));
-
-		// Uses JdbcTemplate's batchUpdate operation to bulk load data
-		jdbcTemplate.batchUpdate(
-				"INSERT INTO customers(first_name, last_name) VALUES (?,?)",
-				splitUpNames);
-
-		insertCustomer(new Customer("Ranga", "Karanam"));
-
-		int todo1 = todoJPAService.addTodo(10, "Ranga",
-				"Dummy10", new Date(), false);
-
-		int todo2 = todoJPAService.addTodo(11, "Ranga",
-				"Dummy11", new Date(), false);
-
-		log.info(
-				"Querying for customer records where first_name = 'Ranga':");
-		jdbcTemplate
-				.query("SELECT id, first_name, last_name FROM customers WHERE first_name = ?",
-						new Object[] { "Ranga" },
-						(rs, rowNum) -> new Customer(
-								rs.getLong("id"),
-								rs.getString("first_name"),
-								rs.getString("last_name")))
-				.forEach(customer -> log
-						.info(customer.toString()));
-
-		log.info(
-				"Querying for todo records where user = 'Ranga':");
-
-		todoJPAService.retrieveTodos("Ranga")
-				.forEach(todo -> log.info(todo.toString()));
-
-		todoJPAService.updateTodo(new Todo(todo1, "Ranga",
-				"Dummy++", new Date(), false));
-
-		log.info("Querying Todo by id " + todo1);
-
-		log.info(todoJPAService.retrieveTodo(todo1)
-				.toString());
-
-		log.info("Deleting todo id " + todo2);
-
-		todoJPAService.deleteTodo(todo2);
-
-		log.info(
-				"Querying for todo records where user = 'Ranga':");
-
-		todoJPAService.retrieveTodos("Ranga")
-				.forEach(todo -> log.info(todo.toString()));
-
+		/*
+		 * int todo1 = todoJPAService.addTodo("Ranga", "Dummy10", new Date(),
+		 * false);
+		 * 
+		 * int todo2 = todoJPAService.addTodo("Ranga", "Dummy11", new Date(),
+		 * false);
+		 * 
+		 * log.info( "Querying for todo records where user = 'Ranga':");
+		 * 
+		 * todoJPAService.retrieveTodos("Ranga") .forEach(todo ->
+		 * log.info(todo.toString()));
+		 * 
+		 * todoJPAService.updateTodo(new Todo(todo1, "Ranga", "Dummy++", new
+		 * Date(), false));
+		 * 
+		 * log.info("Querying Todo by id " + todo1);
+		 * 
+		 * log.info(todoJPAService.retrieveTodo(todo1) .toString());
+		 * 
+		 * log.info("Deleting todo id " + todo2);
+		 * 
+		 * todoJPAService.deleteTodo(todo2);
+		 * 
+		 * log.info( "Querying for todo records where user = 'Ranga':");
+		 * 
+		 * todoJPAService.retrieveTodos("Ranga") .forEach(todo ->
+		 * log.info(todo.toString()));
+		 * 
+		 */
 	}
 
-	private void insertCustomer(Customer customer)
-			throws SQLException {
+	private void runAllStudentExamples() {
+		Passport passport = new Passport("L12344432",
+				"India");
 
-		Connection connection = datasource.getConnection();
+		Student student = createStudent("dummy@dummy.com",
+				"Doe", passport);
+		student = genericRepository.createStudent(student);
 
-		PreparedStatement st = connection.prepareStatement(
-				"INSERT INTO customers(first_name, last_name) VALUES (?,?)");
+		Project project = new Project();
+		project.setName("Project1");
 
-		st.setString(1, customer.getFirstName());
-		st.setString(2, customer.getLastName());
+		project = genericRepository.createProject(project);
 
-		st.execute();
+		genericRepository.assignStudentToProject(
+				student.getId(), project.getId());
 
-		st.close();
+		Task task = new Task();
+		task.setName("Task1");
+		task.setProject(project);
+		task.setStudent(student);
+		genericRepository.createTask(task);
 
-		connection.close();
+		Student student2 = studentRepository
+				.retrieveStudent(101);
+		System.out.println("student2 " + student2);
+
+		printAllDataAfterTest();
+
+		Passport passport2 = genericRepository
+				.getPassport(201);
+		System.out.println("passport 2 " + passport2);
+		System.out.println("passport 2 Student"
+				+ passport2.getStudent());
+	}
+
+	private Student createStudent(String email, String name,
+			Passport passport) {
+		Student student = new Student();
+		student.setEmail(email);
+		student.setName(name);
+		student.setPassportId(passport);
+		return student;
+	}
+
+	public void printAllDataAfterTest() {
+		System.out.println(
+				studentRepository.retrieveAllStudents());
 	}
 }
 

@@ -1,4 +1,4 @@
-package com.example.demo;
+package com.example.demo.rest;
 
 import java.net.URI;
 import java.sql.SQLException;
@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.example.demo.data.todo.TodoJPAService;
+import com.example.demo.entity.Todo;
+
 @RestController
 public class TodoRestService {
 
@@ -30,9 +33,9 @@ public class TodoRestService {
 	@PostMapping("/todos")
 	public ResponseEntity<Void> addTodo(
 			@RequestBody Todo todo) throws SQLException {
-		int todoID = todoJPAService.addTodo(todo.getId(),
-				todo.getUser(), todo.getDesc(),
-				todo.getTargetDate(), todo.isDone());
+		int todoID = todoJPAService.addTodo(todo.getUser(),
+				todo.getDesc(), todo.getTargetDate(),
+				todo.isDone());
 
 		URI location = ServletUriComponentsBuilder
 				.fromCurrentRequest().path("/{id}")
@@ -51,7 +54,6 @@ public class TodoRestService {
 	public void updateTodo(@RequestBody Todo todo)
 			throws SQLException {
 		todoJPAService.updateTodo(todo);
-
 	}
 
 	@DeleteMapping("/todos/{id}")

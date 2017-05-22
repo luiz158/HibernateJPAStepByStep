@@ -1,9 +1,10 @@
-package com.example.demo;
+package com.example.demo.data.todo;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,8 +15,10 @@ import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.example.demo.entity.Todo;
+
 @Component
-public class TodoJdbcService {
+public class TodoJdbcService implements TodoDataService {
 
 	@Autowired
 	DataSource datasource;
@@ -24,6 +27,7 @@ public class TodoJdbcService {
 	// We are explicitly getting the connection! What if there is an
 	// exception while executing the query!
 
+	@Override
 	public List<Todo> retrieveTodos(String user)
 			throws SQLException {
 		Connection connection = datasource.getConnection();
@@ -54,29 +58,33 @@ public class TodoJdbcService {
 
 	}
 
-	public void addTodo(int id, String user, String desc,
+	@Override
+	public int addTodo(String user, String desc,
 			Date targetDate, boolean isDone)
 					throws SQLException {
 		Connection connection = datasource.getConnection();
 
 		PreparedStatement st = connection.prepareStatement(
-				"INSERT INTO todo(id, user, desc, targetDate, isDone) VALUES (?,?,?,?,?)");
+				"INSERT INTO todo(user, desc, target_date, is_done) VALUES (?,?,?,?)",
+				Statement.RETURN_GENERATED_KEYS);
 
-		st.setInt(1, id);
-		st.setString(2, user);
-		st.setString(3, desc);
-		st.setTimestamp(4,
+		st.setString(1, user);
+		st.setString(2, desc);
+		st.setTimestamp(3,
 				new Timestamp(targetDate.getTime()));
-		st.setBoolean(5, isDone);
+		st.setBoolean(4, isDone);
 
-		st.execute();
+		int id = st.executeUpdate();
 
 		st.close();
 
 		connection.close();
 
+		return id;
+
 	}
 
+	@Override
 	public Todo retrieveTodo(int id) throws SQLException {
 		Connection connection = datasource.getConnection();
 
@@ -107,11 +115,12 @@ public class TodoJdbcService {
 
 	}
 
+	@Override
 	public void updateTodo(Todo todo) throws SQLException {
 		Connection connection = datasource.getConnection();
 
 		PreparedStatement st = connection.prepareStatement(
-				"Update todo set user=?, desc=?, targetDate=?, isDone=? where id=?");
+				"Update todo set user=?, desc=?, target_date=?, is_done=? where id=?");
 
 		st.setString(1, todo.getUser());
 		st.setString(2, todo.getDesc());
@@ -128,6 +137,7 @@ public class TodoJdbcService {
 
 	}
 
+	@Override
 	public void deleteTodo(int id) throws SQLException {
 		Connection connection = datasource.getConnection();
 
