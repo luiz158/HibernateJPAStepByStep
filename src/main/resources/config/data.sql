@@ -1,6 +1,8 @@
 INSERT INTO passport VALUES (201,'L1234567','India');
+INSERT INTO passport VALUES (202,'L1234568','India');
 
 INSERT INTO student VALUES (101,201,'Jane', 'jane@doe.com');
+INSERT INTO student VALUES (102,202,'Doe', 'doe@doe.com');
 
 INSERT into project VALUES (301, 'In28Minutes Project 1');
 

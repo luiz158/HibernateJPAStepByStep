@@ -3,6 +3,7 @@ package com.in28minutes.hibernate.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +23,6 @@ public class StudentServiceTest {
 	@Autowired
 	private StudentService service;
 
-	@Autowired
-	private StudentService2 service2;
-
 	@Test
 	@Transactional
 	public void testGetStudent() {
@@ -32,6 +30,14 @@ public class StudentServiceTest {
 		System.out.println(student);
 		assertNotNull(student);
 		assertEquals(101, student.getId());
+	}
+
+	@Test
+	@Transactional
+	public void testGetStudent_GettingAPassport() {
+		Student student = service.getStudent(101);
+		assertNotNull(student.getPassport());
+		assertEquals(201, student.getPassport().getId());
 	}
 
 	@Test
@@ -49,8 +55,15 @@ public class StudentServiceTest {
 	public void testInsertStudent() {
 		Passport passport = new Passport(202, "L12344432", "India");
 		Student student = createStudent("dummy@dummy.com", "Doe", passport);
+		Student insertedStudent = service.insertStudent(student);
+		Student retrievedStudent = service.getStudent(insertedStudent.getId());
+		assertNotNull(retrievedStudent);
+	}
 
-		Student insertedStudent = service2.insertStudent(student);
+	@Test
+	public void testInsertStudent_withoutPassport() {
+		Student student = createStudent("dummy@dummy.com", "Doe", null);
+		Student insertedStudent = service.insertStudent(student);
 		Student retrievedStudent = service.getStudent(insertedStudent.getId());
 		assertNotNull(retrievedStudent);
 	}
@@ -61,6 +74,11 @@ public class StudentServiceTest {
 		student.setName(name);
 		student.setPassportId(passport);
 		return student;
+	}
+
+	@After
+	public void printAllDataAfterTest() {
+		System.out.println(service.getAllStudents());
 	}
 }
 

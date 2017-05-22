@@ -1,32 +1,44 @@
 package com.in28minutes.hibernate.service;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import java.util.List;
 
-import org.springframework.stereotype.Repository;
+import javax.transaction.Transactional;
 
-import com.in28minutes.hibernate.model.Passport;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.in28minutes.hibernate.model.Student;
 
-@Repository
+@Service
 public class StudentService {
 
-	@PersistenceContext
-	private EntityManager entityManager;
+	@Autowired
+	StudentRepository service;
 
-	public Student getStudent(final long id) {
-		return entityManager.find(Student.class, id);
-	}
-
+	@Transactional
 	public Student insertStudent(Student student) {
-		Passport passport = entityManager.merge(student.getPassport());
-		Student persistedStudent = entityManager.merge(student);
-		return persistedStudent;
+		return service.insertStudent(student);
 	}
 
+	@Transactional
+	public Student getStudent(final long id) {
+		return service.getStudent(id);
+	}
+
+	@Transactional
 	public Student updateStudent(Student student) {
-		entityManager.merge(student);
-		return student;
+		return service.updateStudent(student);
+	}
+
+	@Transactional
+	public Student retrieveIndianStudents() {
+		return service.retrieveStudentsFrom("India");
+	}
+
+	@Transactional
+	public List<Student> getAllStudents() {
+		return service.getAllStudents();
 	}
 
 }
+
